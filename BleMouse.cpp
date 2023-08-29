@@ -18,6 +18,9 @@
   static const char* LOG_TAG = "NimBLEDevice";
 #endif
 
+#define LSB(v) ((v >> 8) & 0xff)
+#define MSB(v) (v & 0xff)
+
 static const uint8_t _hidReportDescriptor[] = {
   USAGE_PAGE(1),       0x01, // USAGE_PAGE (Generic Desktop)
   USAGE(1),            0x02, // USAGE (Mouse)
@@ -41,20 +44,23 @@ static const uint8_t _hidReportDescriptor[] = {
   USAGE_PAGE(1),       0x01, //     USAGE_PAGE (Generic Desktop)
   USAGE(1),            0x30, //     USAGE (X)
   USAGE(1),            0x31, //     USAGE (Y)
-  USAGE(1),            0x38, //     USAGE (Wheel)
-  LOGICAL_MINIMUM(1),  0x81, //     LOGICAL_MINIMUM (-127)
-  LOGICAL_MAXIMUM(1),  0x7f, //     LOGICAL_MAXIMUM (127)
-  REPORT_SIZE(1),      0x08, //     REPORT_SIZE (8)
-  REPORT_COUNT(1),     0x03, //     REPORT_COUNT (3)
+//  USAGE(1),            0x38, //     USAGE (Wheel)
+  PHYSICAL_MINIMUM(2), 0x00, 0x00,         //   -127
+  PHYSICAL_MAXIMUM(2), 0x10, 0x27,         //  10000
+  LOGICAL_MINIMUM(2), 0x00, 0x00,         //   -127
+  LOGICAL_MAXIMUM(2), 0x10, 0x27,         //   10000
+  UNIT(2), 0x00, 0x00,         //  No unit
+  REPORT_SIZE(1),     0x10, //     REPORT_SIZE (8)
+  REPORT_COUNT(1),    0x02, //     REPORT_COUNT (3)
   HIDINPUT(1),         0x06, //     INPUT (Data, Variable, Relative) ;3 bytes (X,Y,Wheel)
   // ------------------------------------------------- Horizontal wheel
-  USAGE_PAGE(1),       0x0c, //     USAGE PAGE (Consumer Devices)
-  USAGE(2),      0x38, 0x02, //     USAGE (AC Pan)
-  LOGICAL_MINIMUM(1),  0x81, //     LOGICAL_MINIMUM (-127)
-  LOGICAL_MAXIMUM(1),  0x7f, //     LOGICAL_MAXIMUM (127)
-  REPORT_SIZE(1),      0x08, //     REPORT_SIZE (8)
-  REPORT_COUNT(1),     0x01, //     REPORT_COUNT (1)
-  HIDINPUT(1),         0x06, //     INPUT (Data, Var, Rel)
+//  USAGE_PAGE(1),       0x0c, //     USAGE PAGE (Consumer Devices)
+//  USAGE(2),      0x38, 0x02, //     USAGE (AC Pan)
+//  LOGICAL_MINIMUM(1),  0x81, //     LOGICAL_MINIMUM (-127)
+//  LOGICAL_MAXIMUM(1),  0x7f, //     LOGICAL_MAXIMUM (127)
+//  REPORT_SIZE(1),      0x08, //     REPORT_SIZE (8)
+//  REPORT_COUNT(1),     0x01, //     REPORT_COUNT (1)
+//  HIDINPUT(1),         0x06, //     INPUT (Data, Var, Rel)
   END_COLLECTION(0),         //   END_COLLECTION
   END_COLLECTION(0)          // END_COLLECTION
 };
@@ -86,16 +92,16 @@ void BleMouse::click(uint8_t b)
   move(0,0,0,0);
 }
 
-void BleMouse::move(signed char x, signed char y, signed char wheel, signed char hWheel)
+void BleMouse::move(int16_t x, int16_t y, signed char wheel, signed char hWheel)
 {
   if (this->isConnected())
   {
     uint8_t m[5];
     m[0] = _buttons;
-    m[1] = x;
-    m[2] = y;
-    m[3] = wheel;
-    m[4] = hWheel;
+    m[1] = MSB(x);
+    m[2] = LSB(x);
+    m[3] = MSB(y);
+    m[4] = LSB(y);
     this->inputMouse->setValue(m, 5);
     this->inputMouse->notify();
   }
